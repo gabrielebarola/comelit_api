@@ -2,9 +2,9 @@ import os, json, sys
 import requests
 from bs4 import BeautifulSoup
 
-def scrape_category(cat, endpoint_name, c_map, url, s):
+def scrape_category(cat, c_map, url, s):
     c_map[cat] = {}
-    resp = s.get(url+INFO_ENDPOINT.format(endpoint_name))
+    resp = s.get(url+INFO_ENDPOINT.format(cat))
     data = resp.json()
 
     #creating an object for each env
@@ -18,7 +18,8 @@ def scrape_category(cat, endpoint_name, c_map, url, s):
         c_map[cat][env_name].append(
             {
                 "ref": data["desc"][i],
-                "type": data["type"][i]
+                "type": data["type"][i],
+                "id": i
             }
         )
 
@@ -44,7 +45,7 @@ def main():
 
     url = "http://" + sys.argv[1]
 
-    comelit_map = {}
+    comelit_map = {"url": url, "map":{}}
 
     with requests.session() as s:
 
@@ -52,13 +53,13 @@ def main():
 
         if r.status_code==200:
             if input("would you like to scrape lights? (Y/n): ") != "n":
-                comelit_map = scrape_category("lights", "light", comelit_map, url, s)
+                comelit_map["map"] = scrape_category("light", comelit_map["map"], url, s)
 
             if input("would you like to scrape shutters? (Y/n): ") != "n":
-                comelit_map = scrape_category("shutters", "shutter", comelit_map, url, s)
+                comelit_map["map"] = scrape_category("shutter", comelit_map["map"], url, s)
 
             if input("would you like to scrape others? (Y/n): ") != "n":
-                comelit_map = scrape_category("others", "other", comelit_map, url, s)
+                comelit_map["map"] = scrape_category("other", comelit_map["map"], url, s)
 
             os.makedirs(os.path.dirname(PATH), exist_ok=True)
             with open(PATH, "w") as map_file:
